@@ -1,5 +1,5 @@
 module Language.Lua.QQ
-    (
+    ( luae
     ) where
 
 import Language.Lua.Syntax
