@@ -1,0 +1,24 @@
+name:          lua-lang
+version:       0.1
+cabal-version: >= 1.2
+license:       BSD3
+license-file:  LICENSE
+author:        Quentin Carbonneaux
+homepage:      http://github.com/mpu/lua-lang/
+category:      Testing
+build-type:    Simple
+synopsis:
+    Minimal parsing and pretty printing of LUA. Used in
+    the Dedukti proof system.
+
+source-repository head
+  type:     git
+  location: https://github.com/mpu/lua-lang.git
+
+library
+  build-depends:   base, parsec >= 3.1.0, template-haskell >= 2.5.0, syb
+  extensions:      DeriveDataTypeable
+  exposed-modules: Language.Lua
+                   Language.Lua.Syntax
+                   Language.Lua.Parse
+                   Language.Lua.QQ
