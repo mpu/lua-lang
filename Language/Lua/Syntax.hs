@@ -22,6 +22,7 @@ data Name = Name String
     deriving (Eq, Ord, Show, Typeable, Data)
 
 data Exp = EVar Name PostExp
+         | EFun [Name] [Stat]
          | EParens Exp PostExp
          | ECall FunCall PostExp
          | EBinOp BinOp Exp Exp
@@ -42,8 +43,8 @@ data PostExp = Field Name PostExp
 
 data Stat = Do [Stat]
           | If [(Exp, [Stat])] (Maybe [Stat])
-          | FunDecl Name [Name] [Stat]
           | Call FunCall
+          | Ret Exp
           | Assign [Binding]
     deriving (Eq, Ord, Show, Typeable, Data)
 

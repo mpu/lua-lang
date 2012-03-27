@@ -35,11 +35,16 @@ lexp = EUnOp <$> try unop <*> lexp <|> binexp
                       case op of
                         Just op -> EBinOp op f <$> lexp
                         Nothing -> return f
-          factor = (sym "nil" >> return ENil)
+          factor = (try (sym "nil") >> return ENil)
+                   <|> (try (sym "function") >> funbody)
                    <|> (EAnti <$> (char '$' >> many1 idchar))
                    <|> (((EParens <$> parens lexp)
                      <|> (ECall <$> try fcall)
                      <|> (EVar <$> ident)) >>= post)
+          funbody = do pms <- parens (lexeme ident `sepBy` sym ",")
+                       bdy <- statl
+                       sym "end"
+                       return $ EFun pms bdy
 
 post f = do { char '.'; fi <- ident; post (f . Field fi) }
      <|> do { l <- args; post (f . FCall l) }
@@ -49,7 +54,7 @@ post f = do { char '.'; fi <- ident; post (f . Field fi) }
               Right n -> post (f . Array n)
      <|> return (f Nil)
 
-lstat = dostat <|> ifstat <|> fundec <|> try assign <|> Call <$> try fcall
+lstat = dostat <|> ifstat <|> fundec <|> ret <|> try assign <|> Call <$> try fcall
     where dostat = between (sym "do") (sym "end") statl >>= return . Do
           ifstat = between (sym "if") (sym "end") (conds [])
           conds l = do e <- lexp
@@ -66,9 +71,11 @@ lstat = dostat <|> ifstat <|> fundec <|> try assign <|> Call <$> try fcall
                       p <- parens (ident `sepBy` sym ",")
                       b <- statl
                       sym "end"
-                      return $ FunDecl f p b
+                      return $ Assign [B f (EFun p b)]
+          ret = try (sym "return") >> Ret <$> lexp
           assign = do names <- lexeme ident `sepBy1` sym ","
                       sym "="
                       val <- lexp `sepBy1` sym ","
                       return $ Assign (zipWith B names (val ++ repeat ENil))
-          statl = lstat `sepBy` semi
+
+statl = lstat `sepBy` semi
