@@ -16,9 +16,11 @@ source-repository head
   location: https://github.com/mpu/lua-lang.git
 
 library
-  build-depends:   base, parsec >= 3.1.0, template-haskell >= 2.5.0, syb
+  build-depends:   base, parsec >= 3.1.0, template-haskell >= 2.5.0, syb,
+                   wl-pprint >= 1.0
   extensions:      DeriveDataTypeable
   exposed-modules: Language.Lua
                    Language.Lua.Syntax
                    Language.Lua.Parse
+                   Language.Lua.Pretty
                    Language.Lua.QQ
