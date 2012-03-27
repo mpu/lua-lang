@@ -9,7 +9,6 @@ import Text.Parsec.String
 import Control.Applicative hiding (many, (<|>))
 
 idstart, idchar :: Parser Char
-semi :: Parser ()
 
 idstart = lower <|> upper
 idchar = idstart <|> digit <|> char '_'
