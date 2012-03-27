@@ -19,7 +19,7 @@ num = many1 (digit :: Parser Char) >>= return . (read :: String -> Int)
 semi = option () (sym ";" >> return ())
 
 lexeme p = do { x <- p; spaces; return x }
-sym = lexeme . string
+sym = try . lexeme . string
 parens = between (sym "(") (sym ")")
 brackets = between (sym "[") (sym "]")
 
@@ -29,14 +29,14 @@ unop = sym "not" >> return Not
 fcall = FC <$> ident <*> args
 args = parens (lexp `sepBy` sym ",")
 
-lexp = EUnOp <$> try unop <*> lexp <|> binexp
+lexp = EUnOp <$> unop <*> lexp <|> binexp
     where binexp = do f <- lexeme factor
                       op <- optionMaybe binop
                       case op of
                         Just op -> EBinOp op f <$> lexp
                         Nothing -> return f
-          factor = (try (sym "nil") >> return ENil)
-                   <|> (try (sym "function") >> funbody)
+          factor = (sym "nil" >> return ENil)
+                   <|> (sym "function" >> funbody)
                    <|> (EAnti <$> (char '$' >> many1 idchar))
                    <|> (((EParens <$> parens lexp)
                      <|> (ECall <$> try fcall)
@@ -61,18 +61,18 @@ lstat = dostat <|> ifstat <|> fundec <|> ret <|> try assign <|> Call <$> try fca
                        sym "then"
                        b <- statl
                        let m = (e, b) : l
-                       (try (sym "elseif") >> conds m)
-                         <|> do try (sym "else")
+                       (sym "elseif" >> conds m)
+                         <|> do sym "else"
                                 el <- statl
                                 return (If (reverse m) (Just el))
                          <|> return (If (reverse m) Nothing)
-          fundec = do try (sym "function")
+          fundec = do sym "function"
                       f <- ident
                       p <- parens (ident `sepBy` sym ",")
                       b <- statl
                       sym "end"
                       return $ Assign [B f (EFun p b)]
-          ret = try (sym "return") >> Ret <$> lexp
+          ret = sym "return" >> Ret <$> lexp
           assign = do names <- lexeme ident `sepBy1` sym ","
                       sym "="
                       val <- lexp `sepBy1` sym ","
