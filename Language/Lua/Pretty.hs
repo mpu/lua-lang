@@ -6,13 +6,13 @@ import Text.PrettyPrint.Leijen
 shift = nest 4
 shiftg = group . shift
 
-instance Pretty (Name) where
+instance Pretty Name where
     pretty (Name n) = pretty n
 
-instance Pretty (UnOp) where
+instance Pretty UnOp where
     pretty Not = text "not"
 
-instance Pretty (BinOp) where
+instance Pretty BinOp where
     pretty Or = text "or"
     pretty And = text "and"
     pretty Eq = text "=="
@@ -20,7 +20,7 @@ instance Pretty (BinOp) where
 prettyPms :: Pretty a => [a] -> Doc
 prettyPms = encloseSep lparen rparen (text ", ") . map pretty
 
-instance Pretty (Exp) where
+instance Pretty Exp where
     pretty (EVar n post) = pretty n <> pretty post
     pretty (EFun pms bdy) =
         group $ shift (text "function" <+> prettyPms pms <$> pretty bdy)
@@ -32,17 +32,17 @@ instance Pretty (Exp) where
     pretty (EAnti s) = empty
     pretty (ENil) = text "nil"
 
-instance Pretty (FunCall) where
+instance Pretty FunCall where
     pretty (FC n pms) = pretty n <> prettyPms pms
 
-instance Pretty (PostExp) where
+instance Pretty PostExp where
     pretty (Field n post) = dot <> pretty n <> pretty post
     pretty (Array n post) = brackets (pretty n) <> pretty post
     pretty (Access e post) = brackets (pretty e) <> pretty post
     pretty (FCall l post) = prettyPms l <> pretty post
     pretty (Nil) = empty
 
-instance Pretty (Stat) where
+instance Pretty Stat where
     pretty (Do l) =
         group $ shift (text "do" <$> pretty l) <$> text "end"
     pretty (If l e) =
@@ -62,7 +62,7 @@ instance Pretty (Stat) where
     prettyList [s] = pretty s
     prettyList (s:ss) = pretty s <$> pretty ss
 
-instance Pretty (Binding) where
+instance Pretty Binding where
     pretty _ = empty
 
     prettyList [] = empty
