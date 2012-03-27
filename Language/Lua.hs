@@ -1,7 +1,7 @@
 module Language.Lua
     ( module Language.Lua.Syntax
-    --, module Language.Lua.Pretty
+    , module Language.Lua.Pretty
     ) where
 
 import Language.Lua.Syntax
---import Language.Lua.Pretty
+import Language.Lua.Pretty
