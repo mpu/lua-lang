@@ -15,7 +15,7 @@ import Data.Generics
 data UnOp = Not
     deriving (Eq, Ord, Show, Typeable, Data)
 
-data BinOp = Or | And
+data BinOp = Or | And | Eq
     deriving (Eq, Ord, Show, Typeable, Data)
 
 data Name = Name String
@@ -27,6 +27,7 @@ data Exp = EVar Name PostExp
          | EBinOp BinOp Exp Exp
          | EUnOp UnOp Exp
          | EAnti String
+         | ENil
     deriving (Eq, Ord, Show, Typeable, Data)
 
 data FunCall = FC Name [Exp]
@@ -40,12 +41,12 @@ data PostExp = Field Name PostExp
     deriving (Eq, Ord, Show, Typeable, Data)
 
 data Stat = Do [Stat]
-          | If [(Exp, Stat)] (Maybe Stat)
-          | FunDecl [Name] [Stat]
+          | If [(Exp, [Stat])] (Maybe [Stat])
+          | FunDecl Name [Name] [Stat]
           | Call FunCall
           | Assign [Binding]
-          | Scope [Binding] [Stat]
     deriving (Eq, Ord, Show, Typeable, Data)
 
 data Binding = B Name Exp
+             | L Name Exp
     deriving (Eq, Ord, Show, Typeable, Data)
