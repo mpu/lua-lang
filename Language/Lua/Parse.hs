@@ -39,8 +39,8 @@ lexp = EUnOp <$> unop <*> lexp <|> binexp
     where binexp = do f <- lexeme factor
                       op <- optionMaybe binop
                       case op of
-                        Just op -> EBinOp op f <$> lexp
-                        Nothing -> return f
+                          Just op -> EBinOp op f <$> lexp
+                          Nothing -> return f
           factor = (sym "nil" >> return ENil)
                    <|> (sym "function" >> funbody)
                    <|> EAnti <$> (char '$' >> ident)
