@@ -41,7 +41,7 @@ lexp = EUnOp <$> unop <*> lexp <|> binexp
                         Nothing -> return f
           factor = (sym "nil" >> return ENil)
                    <|> (sym "function" >> funbody)
-                   <|> (EAnti <$> (char '$' >> ident >>= \(Name n) -> return n))
+                   <|> (EAnti <$> (char '$' >> ident))
                    <|> EPre <$> preexp
           funbody = do pms <- parens (lexeme ident `sepBy` sym ",")
                        bdy <- lblock

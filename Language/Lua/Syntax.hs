@@ -25,7 +25,7 @@ data Exp = EPre PreExp
          | EFun [Name] Block
          | EBinOp BinOp Exp Exp
          | EUnOp UnOp Exp
-         | EAnti String
+         | EAnti Name
          | ENil
     deriving (Eq, Ord, Show, Typeable, Data)
 
