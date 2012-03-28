@@ -25,6 +25,7 @@ instance Pretty Exp where
     pretty (EFun pms bdy) =
         group $ shift (text "function" <+> prettyPms pms <$> pretty bdy)
             <$> text "end"
+    pretty (ETable as) = pretty as
     pretty (EBinOp o e1 e2) = pretty e1 <+> pretty o <+> pretty e2
     pretty (EUnOp o e) = pretty o <+> parens (pretty e)
     pretty (EAnti s) = empty
@@ -37,6 +38,16 @@ instance Pretty PreExp where
     pretty (Array pre n) = pretty pre <> brackets (pretty n)
     pretty (Access pre e) = pretty pre <> brackets (pretty e)
     pretty (FCall pre l) = pretty pre <> prettyPms l
+
+instance Pretty TAssign where
+    pretty (TField n e) = pretty n <+> text "=" <+> pretty e
+    pretty (TSet es e) = brackets (pretty es) <+> text "=" <+> pretty e
+    pretty (TExp e) = pretty e
+
+    prettyList l = group (shift (lbrace <$> go l) <$> rbrace)
+        where go [] = empty
+              go [a] = pretty a
+              go (a:as) = pretty a <> comma <$> go as
 
 instance Pretty Stat where
     pretty (Do l) =

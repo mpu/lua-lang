@@ -26,6 +26,7 @@ lexeme = P.lexeme lexer
 sym = try . lexeme . P.symbol lexer
 parens = P.parens lexer
 brackets = P.brackets lexer
+braces = P.braces lexer
 semi = option "" (P.semi lexer)
 
 binop = (sym "and" >> return And) <|> (sym "or" >> return Or) <|> (sym "==" >> return Eq)
@@ -41,8 +42,9 @@ lexp = EUnOp <$> unop <*> lexp <|> binexp
                         Nothing -> return f
           factor = (sym "nil" >> return ENil)
                    <|> (sym "function" >> funbody)
-                   <|> (EAnti <$> (char '$' >> ident))
+                   <|> EAnti <$> (char '$' >> ident)
                    <|> EPre <$> preexp
+                   <|> ETable <$> braces tfields
           funbody = do pms <- parens (lexeme ident `sepBy` sym ",")
                        bdy <- lblock
                        sym "end"
@@ -56,6 +58,13 @@ preexp = ((Var <$> ident <|> Parens <$> parens lexp) >>= post)
                           Left ex -> post (Access e ex)
                           Right n -> post (Array e n)
                <|> return e
+
+tfields = choice [tset, try tfield, texp]
+              `sepBy` (P.semi lexer <|> P.comma lexer)
+    where tset = assign TSet (brackets lexp)
+          tfield = assign TField (lexeme ident)
+          texp = TExp <$> lexp
+          assign c p = do { x <- p; sym "="; c x <$> lexp }
 
 lstat = choice [dostat, ifstat, fundec, ret, try assign, Call <$> try preexp]
     where dostat = between (sym "do") (sym "end") lblock >>= return . Do

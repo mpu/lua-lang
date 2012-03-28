@@ -4,6 +4,7 @@ module Language.Lua.Syntax
     , Name(..)
     , Exp(..)
     , PreExp(..)
+    , TAssign(..)
     , Stat(..)
     , Block(..)
     , Binding(..)
@@ -23,6 +24,7 @@ data Name = Name String
 
 data Exp = EPre PreExp
          | EFun [Name] Block
+         | ETable [TAssign]
          | EBinOp BinOp Exp Exp
          | EUnOp UnOp Exp
          | EAnti Name
@@ -35,6 +37,11 @@ data PreExp = Var Name
             | Array PreExp Integer
             | Access PreExp Exp
             | FCall PreExp [Exp]
+    deriving (Eq, Ord, Show, Typeable, Data)
+
+data TAssign = TField Name Exp
+             | TSet Exp Exp
+             | TExp Exp
     deriving (Eq, Ord, Show, Typeable, Data)
 
 data Stat = Do Block
