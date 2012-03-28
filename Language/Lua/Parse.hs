@@ -24,7 +24,7 @@ lexer = P.makeTokenParser luadef
 ident = P.identifier lexer >>= return . Name
 num = P.decimal lexer
 lexeme = P.lexeme lexer
-sym = try . lexeme . P.symbol lexer
+sym = try . P.symbol lexer
 parens = P.parens lexer
 brackets = P.brackets lexer
 braces = P.braces lexer
