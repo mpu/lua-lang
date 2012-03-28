@@ -3,9 +3,9 @@ module Language.Lua.Syntax
     , BinOp(..)
     , Name(..)
     , Exp(..)
-    , FunCall(..)
-    , PostExp(..)
+    , PreExp(..)
     , Stat(..)
+    , Block(..)
     , Binding(..)
     ) where
 
@@ -21,33 +21,31 @@ data BinOp = Or | And | Eq
 data Name = Name String
     deriving (Eq, Ord, Show, Typeable, Data)
 
-data Exp = EVar Name PostExp
-         | EFun [Name] [Stat]
-         | EParens Exp PostExp
-         | ECall FunCall PostExp
+data Exp = EPre PreExp
+         | EFun [Name] Block
          | EBinOp BinOp Exp Exp
          | EUnOp UnOp Exp
          | EAnti String
          | ENil
     deriving (Eq, Ord, Show, Typeable, Data)
 
-data FunCall = FC Name [Exp]
+data PreExp = Var Name
+            | Parens Exp
+            | Field PreExp Name
+            | Array PreExp Integer
+            | Access PreExp Exp
+            | FCall PreExp [Exp]
     deriving (Eq, Ord, Show, Typeable, Data)
 
-data PostExp = Field Name PostExp
-             | Array Int PostExp
-             | Access Exp PostExp
-             | FCall [Exp] PostExp
-             | Nil
-    deriving (Eq, Ord, Show, Typeable, Data)
-
-data Stat = Do [Stat]
-          | If [(Exp, [Stat])] (Maybe [Stat])
-          | Call FunCall
+data Stat = Do Block
+          | If [(Exp, Block)] (Maybe Block)
+          | Call PreExp
           | Ret Exp
           | Assign [Binding]
     deriving (Eq, Ord, Show, Typeable, Data)
 
-data Binding = B Name Exp
-             | L Name Exp
+data Block = Block [Stat]
+    deriving (Eq, Ord, Show, Typeable, Data)
+
+data Binding = B PreExp Exp
     deriving (Eq, Ord, Show, Typeable, Data)

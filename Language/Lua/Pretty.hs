@@ -6,9 +6,6 @@ import Text.PrettyPrint.Leijen
 shift = nest 4
 shiftg = group . shift
 
-instance Pretty Name where
-    pretty (Name n) = pretty n
-
 instance Pretty UnOp where
     pretty Not = text "not"
 
@@ -17,30 +14,29 @@ instance Pretty BinOp where
     pretty And = text "and"
     pretty Eq = text "=="
 
+instance Pretty Name where
+    pretty (Name n) = pretty n
+
 prettyPms :: Pretty a => [a] -> Doc
 prettyPms = encloseSep lparen rparen (text ", ") . map pretty
 
 instance Pretty Exp where
-    pretty (EVar n post) = pretty n <> pretty post
+    pretty (EPre p) = pretty p
     pretty (EFun pms bdy) =
         group $ shift (text "function" <+> prettyPms pms <$> pretty bdy)
             <$> text "end"
-    pretty (EParens e post) = parens (pretty e) <> pretty post
-    pretty (ECall fc post) = pretty fc <> pretty post
     pretty (EBinOp o e1 e2) = pretty e1 <+> pretty o <+> pretty e2
     pretty (EUnOp o e) = pretty o <+> parens (pretty e)
     pretty (EAnti s) = empty
     pretty (ENil) = text "nil"
 
-instance Pretty FunCall where
-    pretty (FC n pms) = pretty n <> prettyPms pms
-
-instance Pretty PostExp where
-    pretty (Field n post) = dot <> pretty n <> pretty post
-    pretty (Array n post) = brackets (pretty n) <> pretty post
-    pretty (Access e post) = brackets (pretty e) <> pretty post
-    pretty (FCall l post) = prettyPms l <> pretty post
-    pretty (Nil) = empty
+instance Pretty PreExp where
+    pretty (Var n) = pretty n
+    pretty (Parens e) = parens (pretty e)
+    pretty (Field pre n) = pretty pre <> dot <> pretty n
+    pretty (Array pre n) = pretty pre <> brackets (pretty n)
+    pretty (Access pre e) = pretty pre <> brackets (pretty e)
+    pretty (FCall pre l) = pretty pre <> prettyPms l
 
 instance Pretty Stat where
     pretty (Do l) =
@@ -61,6 +57,9 @@ instance Pretty Stat where
     prettyList [] = empty
     prettyList [s] = pretty s
     prettyList (s:ss) = pretty s <$> pretty ss
+
+instance Pretty Block where
+    pretty (Block b) = pretty b
 
 instance Pretty Binding where
     pretty _ = empty

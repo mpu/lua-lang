@@ -1,31 +1,36 @@
-module Language.Lua.Parse
-    ( lexp
-    , lstat
-    ) where
+module Language.Lua.Parse (lexp, lstat, lblock) where
 
 import Language.Lua.Syntax
 import Text.Parsec
 import Text.Parsec.String
+import qualified Text.Parsec.Token as P
+import Text.Parsec.Language
 import Control.Applicative hiding (many, (<|>))
 
-idstart, idchar :: Parser Char
+luadef = emptyDef { P.commentStart = "--[["
+                  , P.commentEnd = "]]"
+                  , P.commentLine = "--"
+                  , P.nestedComments = True
+                  , P.identStart = lower <|> upper
+                  , P.identLetter = lower <|> upper <|> digit <|> char '_'
+                  , P.reservedNames =
+                      [ "if", "else", "elseif", "end", "do", "for"
+                      , "function", "return", "true", "false", "nil" ]
+                  }
 
-idstart = lower <|> upper
-idchar = idstart <|> digit <|> char '_'
+lexer = P.makeTokenParser luadef
 
-ident = (:) <$> idstart <*> many idchar >>= return . Name
-num = many1 (digit :: Parser Char) >>= return . (read :: String -> Int)
-semi = option () (sym ";" >> return ())
-
-lexeme p = do { x <- p; spaces; return x }
-sym = try . lexeme . string
-parens = between (sym "(") (sym ")")
-brackets = between (sym "[") (sym "]")
+ident = P.identifier lexer >>= return . Name
+num = P.decimal lexer
+lexeme = P.lexeme lexer
+sym = try . lexeme . P.symbol lexer
+parens = P.parens lexer
+brackets = P.brackets lexer
+semi = option "" (P.semi lexer)
 
 binop = (sym "and" >> return And) <|> (sym "or" >> return Or) <|> (sym "==" >> return Eq)
 unop = sym "not" >> return Not
 
-fcall = FC <$> ident <*> args
 args = parens (lexp `sepBy` sym ",")
 
 lexp = EUnOp <$> unop <*> lexp <|> binexp
@@ -36,45 +41,44 @@ lexp = EUnOp <$> unop <*> lexp <|> binexp
                         Nothing -> return f
           factor = (sym "nil" >> return ENil)
                    <|> (sym "function" >> funbody)
-                   <|> (EAnti <$> (char '$' >> many1 idchar))
-                   <|> (((EParens <$> parens lexp)
-                     <|> (ECall <$> try fcall)
-                     <|> (EVar <$> ident)) >>= post)
+                   <|> (EAnti <$> (char '$' >> ident >>= \(Name n) -> return n))
+                   <|> EPre <$> preexp
           funbody = do pms <- parens (lexeme ident `sepBy` sym ",")
-                       bdy <- statl
+                       bdy <- lblock
                        sym "end"
                        return $ EFun pms bdy
 
-post f = do { char '.'; fi <- ident; post (f . Field fi) }
-     <|> do { l <- args; post (f . FCall l) }
-     <|> do e <- brackets (Left <$> lexp <|> Right <$> num)
-            case e of
-              Left e -> post (f . Access e)
-              Right n -> post (f . Array n)
-     <|> return (f Nil)
+preexp = ((Var <$> ident <|> Parens <$> parens lexp) >>= post)
+    where post e = do { char '.'; f <- ident; post (Field e f) }
+               <|> do { l <- args; post (FCall e l) }
+               <|> do x <- brackets (Left <$> lexp <|> Right <$> num)
+                      case x of
+                          Left ex -> post (Access e ex)
+                          Right n -> post (Array e n)
+               <|> return e
 
-lstat = dostat <|> ifstat <|> fundec <|> ret <|> try assign <|> Call <$> try fcall
-    where dostat = between (sym "do") (sym "end") statl >>= return . Do
+lstat = choice [dostat, ifstat, fundec, ret, try assign, Call <$> try preexp]
+    where dostat = between (sym "do") (sym "end") lblock >>= return . Do
           ifstat = between (sym "if") (sym "end") (conds [])
           conds l = do e <- lexp
                        sym "then"
-                       b <- statl
+                       b <- lblock
                        let m = (e, b) : l
                        (sym "elseif" >> conds m)
                          <|> do sym "else"
-                                el <- statl
+                                el <- lblock
                                 return (If (reverse m) (Just el))
                          <|> return (If (reverse m) Nothing)
           fundec = do sym "function"
                       f <- ident
                       p <- parens (ident `sepBy` sym ",")
-                      b <- statl
+                      b <- lblock
                       sym "end"
-                      return $ Assign [B f (EFun p b)]
+                      return $ Assign [B (Var f) (EFun p b)]
           ret = sym "return" >> Ret <$> lexp
-          assign = do names <- lexeme ident `sepBy1` sym ","
+          assign = do names <- preexp `sepBy1` sym ","
                       sym "="
                       val <- lexp `sepBy1` sym ","
                       return $ Assign (zipWith B names (val ++ repeat ENil))
 
-statl = lstat `sepBy` semi
+lblock = Block <$> lstat `sepBy` semi
