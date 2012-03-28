@@ -65,9 +65,10 @@ tfields = choice [tset, try tfield, texp]
     where tset = assign TSet (brackets lexp)
           tfield = assign TField (lexeme ident)
           texp = TExp <$> lexp
-          assign c p = do { x <- p; sym "="; c x <$> lexp }
+          assign c p = c <$> p <* sym "=" <*> lexp
 
-lstat = choice [dostat, ifstat, try fundec, ret, lassign, try gassign, Call <$> try preexp]
+lstat = choice [ dostat , ifstat, try fundec
+               , choice [ret, lassign, try gassign, Call <$> try preexp] <* semi ]
     where dostat = between (sym "do") (sym "end") lblock >>= return . Do
           ifstat = between (sym "if") (sym "end") (conds [])
           conds l = do e <- lexp
@@ -75,8 +76,7 @@ lstat = choice [dostat, ifstat, try fundec, ret, lassign, try gassign, Call <$> 
                        b <- lblock
                        let m = (e, b) : l
                        (sym "elseif" >> conds m)
-                         <|> (sym "else" >> If (reverse m) . Just <$> lblock)
-                         <|> return (If (reverse m) Nothing)
+                         <|> If (reverse m) <$> optionMaybe (sym "else" >> lblock)
           fundec = do scope <- optionMaybe (sym "local")
                       sym "function"
                       f <- ident
@@ -96,4 +96,4 @@ lstat = choice [dostat, ifstat, try fundec, ret, lassign, try gassign, Call <$> 
                        vals <- lexp `sepBy1` sym ","
                        return $ Assign (zip lvas (vals ++ repeat ENil))
 
-lblock = Block <$> lstat `sepBy` semi
+lblock = Block <$> many lstat

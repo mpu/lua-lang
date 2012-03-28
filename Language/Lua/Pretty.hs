@@ -59,14 +59,14 @@ instance Pretty Stat where
     pretty (Do l) =
         group $ shift (text "do" <$> pretty l) <$> text "end"
     pretty (If l e) =
-        text "if" <+> prettyConds l e <$> text "end"
+        text "if" <+> prettyConds l e <> text "end"
       where prettyConds [] Nothing = empty
-            prettyConds [] (Just l) = shiftg $ text "else" <$> pretty l
+            prettyConds [] (Just l) = shiftg (text "else" <$> pretty l) <> line
             prettyConds [(e, s)] el =
-                shiftg (pretty e <+> text "then" <$> pretty s) </> prettyConds [] el
+                shiftg (pretty e <+> text "then" <$> pretty s) <$> prettyConds [] el
             prettyConds ((e, s) : l) el =
                 shiftg (pretty e <+> text "then" <$> pretty s)
-                </> text "elseif" <+> prettyConds l el
+                <$> text "elseif" <+> prettyConds l el
     pretty (Call fc) = pretty fc <> semi
     pretty (Ret e) = text "return" <+> pretty e <> semi
     pretty (Assign b) = assignl b <> semi
