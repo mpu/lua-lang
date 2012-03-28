@@ -75,9 +75,7 @@ lstat = choice [dostat, ifstat, try fundec, ret, lassign, try gassign, Call <$> 
                        b <- lblock
                        let m = (e, b) : l
                        (sym "elseif" >> conds m)
-                         <|> do sym "else"
-                                el <- lblock
-                                return (If (reverse m) (Just el))
+                         <|> (sym "else" >> If (reverse m) . Just <$> lblock)
                          <|> return (If (reverse m) Nothing)
           fundec = do scope <- optionMaybe (sym "local")
                       sym "function"
