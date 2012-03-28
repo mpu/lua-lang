@@ -49,6 +49,12 @@ instance Pretty TAssign where
               go [a] = pretty a
               go (a:as) = pretty a <> comma <$> go as
 
+assignl :: Pretty a => [(a, Exp)] -> Doc
+assignl [] = empty
+assignl l  | (ln, le) <- unzip l = coml ln <+> equals <+> coml le
+    where coml :: Pretty a => [a] -> Doc
+          coml = encloseSep empty empty (text ", ") . map pretty
+
 instance Pretty Stat where
     pretty (Do l) =
         group $ shift (text "do" <$> pretty l) <$> text "end"
@@ -63,7 +69,11 @@ instance Pretty Stat where
                 </> text "elseif" <+> prettyConds l el
     pretty (Call fc) = pretty fc <> semi
     pretty (Ret e) = text "return" <+> pretty e <> semi
-    pretty (Assign b) = pretty b <> semi
+    pretty (Assign b) = assignl b <> semi
+    pretty (Bind b) = text "local" <+> assignl b <> semi
+    pretty (BindFun f p bdy) =
+        shiftg (text "local function" <+> pretty f <> prettyPms p <$> pretty bdy)
+        <$> text "end"
 
     prettyList [] = empty
     prettyList [s] = pretty s
@@ -71,13 +81,3 @@ instance Pretty Stat where
 
 instance Pretty Block where
     pretty (Block b) = pretty b
-
-instance Pretty Binding where
-    pretty _ = empty
-
-    prettyList [] = empty
-    prettyList l = com ln <+> equals <+> com le
-        where com :: Pretty a => [a] -> Doc
-              com = encloseSep empty empty (text ", ") . map pretty
-              ln = map (\(B n _) -> n) l
-              le = map (\(B _ e) -> e) l

@@ -15,7 +15,8 @@ luadef = emptyDef { P.commentStart = "--[["
                   , P.identLetter = lower <|> upper <|> digit <|> char '_'
                   , P.reservedNames =
                       [ "if", "else", "elseif", "end", "do", "for"
-                      , "function", "return", "true", "false", "nil" ]
+                      , "function", "return", "true", "false", "nil"
+                      , "local" ]
                   }
 
 lexer = P.makeTokenParser luadef
@@ -66,7 +67,7 @@ tfields = choice [tset, try tfield, texp]
           texp = TExp <$> lexp
           assign c p = do { x <- p; sym "="; c x <$> lexp }
 
-lstat = choice [dostat, ifstat, fundec, ret, try assign, Call <$> try preexp]
+lstat = choice [dostat, ifstat, try fundec, ret, lassign, try gassign, Call <$> try preexp]
     where dostat = between (sym "do") (sym "end") lblock >>= return . Do
           ifstat = between (sym "if") (sym "end") (conds [])
           conds l = do e <- lexp
@@ -78,16 +79,23 @@ lstat = choice [dostat, ifstat, fundec, ret, try assign, Call <$> try preexp]
                                 el <- lblock
                                 return (If (reverse m) (Just el))
                          <|> return (If (reverse m) Nothing)
-          fundec = do sym "function"
+          fundec = do scope <- optionMaybe (sym "local")
+                      sym "function"
                       f <- ident
                       p <- parens (ident `sepBy` sym ",")
                       b <- lblock
                       sym "end"
-                      return $ Assign [B (Var f) (EFun p b)]
+                      case scope of
+                          Nothing -> return $ Assign [(Var f, EFun p b)]
+                          Just _ -> return $ BindFun f p b
           ret = sym "return" >> Ret <$> lexp
-          assign = do names <- preexp `sepBy1` sym ","
-                      sym "="
-                      val <- lexp `sepBy1` sym ","
-                      return $ Assign (zipWith B names (val ++ repeat ENil))
+          lassign = do sym "local"
+                       names <- ident `sepBy1` sym ","
+                       vals <- (sym "=" >> lexp `sepBy1` sym ",") <|> return []
+                       return $ Bind (zip names (vals ++ repeat ENil))
+          gassign = do lvas <- preexp `sepBy1` sym ","
+                       sym "="
+                       vals <- lexp `sepBy1` sym ","
+                       return $ Assign (zip lvas (vals ++ repeat ENil))
 
 lblock = Block <$> lstat `sepBy` semi

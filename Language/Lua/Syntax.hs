@@ -7,7 +7,6 @@ module Language.Lua.Syntax
     , TAssign(..)
     , Stat(..)
     , Block(..)
-    , Binding(..)
     ) where
 
 import Data.Typeable
@@ -48,11 +47,10 @@ data Stat = Do Block
           | If [(Exp, Block)] (Maybe Block)
           | Call PreExp
           | Ret Exp
-          | Assign [Binding]
+          | Assign [(PreExp, Exp)]
+          | Bind [(Name, Exp)]
+          | BindFun Name [Name] Block
     deriving (Eq, Ord, Show, Typeable, Data)
 
 data Block = Block [Stat]
-    deriving (Eq, Ord, Show, Typeable, Data)
-
-data Binding = B PreExp Exp
     deriving (Eq, Ord, Show, Typeable, Data)
