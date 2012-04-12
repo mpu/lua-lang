@@ -29,6 +29,7 @@ instance Pretty Exp where
     pretty (EBinOp o e1 e2) = pretty e1 <+> pretty o <+> pretty e2
     pretty (EUnOp o e) = pretty o <+> parens (pretty e)
     pretty (EAnti s) = empty
+    pretty (EString s) = text $ show s
     pretty (ENil) = text "nil"
 
 instance Pretty PreExp where

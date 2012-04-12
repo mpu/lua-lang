@@ -19,6 +19,7 @@ data BinOp = Or | And | Eq
     deriving (Eq, Ord, Show, Typeable, Data)
 
 data Name = Name String
+          | AName String
     deriving (Eq, Ord, Show, Typeable, Data)
 
 data Exp = EPre PreExp
@@ -27,6 +28,7 @@ data Exp = EPre PreExp
          | EBinOp BinOp Exp Exp
          | EUnOp UnOp Exp
          | EAnti Name
+         | EString String
          | ENil
     deriving (Eq, Ord, Show, Typeable, Data)
 

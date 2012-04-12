@@ -21,7 +21,8 @@ luadef = emptyDef { P.commentStart = "--[["
 
 lexer = P.makeTokenParser luadef
 
-ident = P.identifier lexer >>= return . Name
+ident = (Name <$> P.identifier lexer) <|>
+        (AName <$> lexeme (char '`' *> P.identifier lexer))
 num = P.decimal lexer
 lexeme = P.lexeme lexer
 sym = try . P.symbol lexer
@@ -29,6 +30,7 @@ parens = P.parens lexer
 brackets = P.brackets lexer
 braces = P.braces lexer
 semi = option "" (P.semi lexer)
+stringLit = P.stringLiteral lexer
 
 binop = (sym "and" >> return And) <|> (sym "or" >> return Or) <|> (sym "==" >> return Eq)
 unop = sym "not" >> return Not
@@ -44,6 +46,7 @@ lexp = EUnOp <$> unop <*> lexp <|> binexp
           factor = (sym "nil" >> return ENil)
                    <|> (sym "function" >> funbody)
                    <|> EAnti <$> (char '$' >> ident)
+                   <|> EString <$> stringLit
                    <|> EPre <$> preexp
                    <|> ETable <$> braces tfields
           funbody = do pms <- parens (lexeme ident `sepBy` sym ",")

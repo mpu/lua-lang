@@ -31,9 +31,11 @@ anti f s = do loc <- TH.location
               let pos = ( TH.loc_filename loc
                         , fst (TH.loc_start loc)
                         , snd (TH.loc_start loc))
-              f pos s >>= dataToExpQ (const Nothing `extQ` antiV)
+              f pos s >>= dataToExpQ (const Nothing `extQ` antiV `extQ` antiN)
     where antiV (EAnti (Name s)) = Just $ TH.varE $ TH.mkName s
           antiV _                = Nothing
+          antiN (AName s) = Just $ TH.varE $ TH.mkName s
+          antiN _         = Nothing
 
 mkqq :: (String -> TH.ExpQ) -> QuasiQuoter
 mkqq f = QuasiQuoter { quoteExp = f
