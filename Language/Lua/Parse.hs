@@ -23,7 +23,7 @@ lexer = P.makeTokenParser luadef
 
 ident = (Name <$> P.identifier lexer) <|>
         (AName <$> lexeme (char '`' *> P.identifier lexer))
-num = P.decimal lexer
+num = fromInteger <$> P.decimal lexer
 lexeme = P.lexeme lexer
 sym = try . P.symbol lexer
 parens = P.parens lexer

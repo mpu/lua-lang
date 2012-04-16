@@ -35,7 +35,7 @@ data Exp = EPre PreExp
 data PreExp = Var Name
             | Parens Exp
             | Field PreExp Name
-            | Array PreExp Integer
+            | Array PreExp Int
             | Access PreExp Exp
             | FCall PreExp [Exp]
     deriving (Eq, Ord, Show, Typeable, Data)
