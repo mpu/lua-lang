@@ -47,6 +47,7 @@ lexp = EUnOp <$> unop <*> lexp <|> binexp
                    <|> (sym "function" >> funbody)
                    <|> EAnti <$> (char '$' >> ident)
                    <|> EString <$> stringLit
+                   <|> ENum <$> num
                    <|> EPre <$> preexp
                    <|> ETable <$> braces tfields
           funbody = do pms <- parens (lexeme ident `sepBy` sym ",")

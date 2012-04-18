@@ -29,6 +29,7 @@ data Exp = EPre PreExp
          | EUnOp UnOp Exp
          | EAnti Name
          | EString String
+         | ENum Int
          | ENil
     deriving (Eq, Ord, Show, Typeable, Data)
 
