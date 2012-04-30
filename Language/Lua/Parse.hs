@@ -88,16 +88,16 @@ lstat = choice [ dostat , ifstat, try fundec
                       b <- lblock
                       sym "end"
                       case scope of
-                          Nothing -> return $ Assign [(Var f, EFun p b)]
+                          Nothing -> return $ Assign [Var f] [EFun p b]
                           Just _ -> return $ BindFun f p b
           ret = sym "return" >> Ret <$> lexp
           lassign = do sym "local"
                        names <- ident `sepBy1` sym ","
                        vals <- (sym "=" >> lexp `sepBy1` sym ",") <|> return []
-                       return $ Bind (zip names (vals ++ repeat ENil))
+                       return $ Bind names vals
           gassign = do lvas <- preexp `sepBy1` sym ","
                        sym "="
                        vals <- lexp `sepBy1` sym ","
-                       return $ Assign (zip lvas (vals ++ repeat ENil))
+                       return $ Assign lvas vals
 
 lblock = Block <$> many lstat

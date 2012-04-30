@@ -50,8 +50,8 @@ data Stat = Do Block
           | If [(Exp, Block)] (Maybe Block)
           | Call PreExp
           | Ret Exp
-          | Assign [(PreExp, Exp)]
-          | Bind [(Name, Exp)]
+          | Assign [PreExp] [Exp]
+          | Bind [Name] [Exp]
           | BindFun Name [Name] Block
     deriving (Eq, Ord, Show, Typeable, Data)
 
